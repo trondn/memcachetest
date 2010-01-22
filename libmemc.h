@@ -24,7 +24,11 @@
 #define	LIBMEMC_LIBMEMC_H
 
 #include <sys/types.h>
+#ifndef __WIN32__
 #include <arpa/inet.h>
+#else
+#include "win32/win32.h"
+#endif
 
 #ifdef __cplusplus
 extern "C"  {

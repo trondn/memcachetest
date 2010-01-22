@@ -27,20 +27,21 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <pthread.h>
+#include <errno.h>
+#include <assert.h>
+#include <string.h>
+#include <getopt.h>
+#ifndef __WIN32__
 #include <sys/socket.h>
 #include <netdb.h>
 #include <arpa/inet.h>
-#include <stdio.h>
 #include <signal.h>
-#include <pthread.h>
 #include <unistd.h>
-#include <stdlib.h>
-#include <errno.h>
 #include <sys/resource.h>
-#include <assert.h>
-#include <string.h>
 #ifdef HAVE_MMAN_H
 #include <sys/mman.h>
+#endif
 #endif
 
 #ifdef HAVE_LIBMEMCACHED
@@ -434,7 +435,7 @@ static struct connection *get_connection(void) {
     } else {
         int index;
         do {
-            index = random() % connection_pool_size;
+            index = RAND % connection_pool_size;
         } while (pthread_mutex_trylock(&connectionpool[index].mutex) != 0);
 
         return &connectionpool[index];
@@ -522,7 +523,7 @@ static int initialize_dataset() {
             dataset[ii].size = datablock.size;
             total += dataset[ii].size;
         } else {
-            dataset[ii].size = random() % datablock.size;
+            dataset[ii].size = RAND % datablock.size;
             if (dataset[ii].size == 0) {
                 dataset[ii].size = 1024;
             }
@@ -667,7 +668,7 @@ struct item get_setval(void) {
         ret.key = keyarray + ((keylength + 1) * (offset));
     } else {
         /* try use the ring... */
-       int offset = random() % no_items;
+       int offset = RAND % no_items;
        ret.key = dataset[offset].key;
        ret.keylen = dataset[offset].keylen;
        ret.size = dataset[offset].size;
