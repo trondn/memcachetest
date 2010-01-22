@@ -29,17 +29,21 @@
 #include <memcached/protocol_binary.h>
 #endif
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <netinet/tcp.h>
-#include <unistd.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#ifndef __WIN32__
+#include <sys/socket.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <netinet/tcp.h>
+#include <unistd.h>
 #include <sys/uio.h>
+#else
+#include "win32/win32.h"
+#endif
 
 struct Server {
    int sock;
@@ -338,7 +342,7 @@ static int server_sendv(struct Server* server, struct iovec *iov, int iovcnt) {
 #ifdef WIN32
    // @todo I might have a scattered IO function on windows...
    for (int ii = 0; ii < iovcnt; ++ii) {
-      if (send(server, iov[ii].iov_base, iov[ii].iov_len) != 0) {
+      if (send(server, iov[ii].iov_base, iov[ii].iov_len,0) != 0) {
          return -1;
       }
    }
@@ -501,7 +505,11 @@ static int binary_get(struct Server* server, struct Item* item)
          iovec[1].iov_base = item->data;
          iovec[1].iov_len = item->size;
 
+#ifndef __WIN32__
          ssize_t nread = readv(server->sock, iovec, 2);
+#else
+         ssize_t nread = WSARecv(server->sock, iovec, 2, NULL, NULL, NULL, NULL);
+#endif
          if (nread < bodylen) {
              // partial read.. read the rest!
              nread -= 4;

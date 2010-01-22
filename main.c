@@ -700,7 +700,7 @@ static int test(struct report *rep) {
             }
         }
         
-        if (keyarray == NULL && setprc > 0 && (random() % 100) < setprc) { // @todo fixme!!! (we don't do set right now...)
+        if (keyarray == NULL && setprc > 0 && (RAND % 100) < setprc) { // @todo fixme!!! (we don't do set right now...)
             hrtime_t delta;
             hrtime_t start = gethrtime();
             memcached_set_wrapper(connection, item.key, item.keylen,
@@ -1045,12 +1045,15 @@ int main(int argc, char **argv) {
 
     {
         int maxthreads = no_threads;
+#ifndef __WIN32__
         struct rlimit rlim;
+#endif
 
         if (maxthreads < connection_pool_size) {
             maxthreads = connection_pool_size;
         }
 
+#ifndef __WIN32__
         if (getrlimit(RLIMIT_NOFILE, &rlim) == 0) {
             if (rlim.rlim_cur < (maxthreads + 10)) {
                 rlim.rlim_cur = maxthreads + 10;
@@ -1065,6 +1068,7 @@ int main(int argc, char **argv) {
             fprintf(stderr, "Failed to get file limit: %s\n", strerror(errno));
             return 1;
         }
+#endif
     }
 
     if (hosts == NULL) {
@@ -1127,7 +1131,11 @@ int main(int argc, char **argv) {
             while (current < no_iterations) {
                 struct report temp = {0};
                 char buff[40];
+#ifndef __WIN32__
                 sleep(5);
+#else
+                Sleep(5);
+#endif
                 /* print average */
 
 
@@ -1290,6 +1298,7 @@ int main(int argc, char **argv) {
         free(threads);
     } while (loop);
 
+#ifndef __WIN32__
     if (getrusage(RUSAGE_SELF, &rusage) == -1) {
         fprintf(stderr, "Failed to get resource usage: %s\n",
                 strerror(errno));
@@ -1324,7 +1333,7 @@ int main(int argc, char **argv) {
                     buffer, sizeof (buffer)));
         }
     }
-
+#endif
 
     destroy_connection_pool();
 

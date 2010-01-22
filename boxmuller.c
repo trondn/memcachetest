@@ -11,6 +11,12 @@
 #include <math.h>
 #include <stdlib.h>
 
+#ifndef __WIN32__
+#define DRAND48 drand48()
+#else
+#define DRAND48 rand()
+#endif
+
 double box_muller(double m, double s)	/* normal random variate generator */
 {				        /* mean m, standard deviation s */
 	double x1, x2, w, y1;
@@ -25,8 +31,8 @@ double box_muller(double m, double s)	/* normal random variate generator */
 	else
 	{
 		do {
-			x1 = 2.0 * drand48() - 1.0;
-			x2 = 2.0 * drand48() - 1.0;
+			x1 = 2.0 * DRAND48 - 1.0;
+			x2 = 2.0 * DRAND48 - 1.0;
 			w = x1 * x1 + x2 * x2;
 		} while ( w >= 1.0 );
 
