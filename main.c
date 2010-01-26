@@ -203,6 +203,37 @@ struct connection {
 
 extern double box_muller(double m, double s);
 
+
+/**
+ * Initialize sockets library on platforms that require specialized init
+ * of the socket library
+ * @return 0 on success, -1 failure
+ */
+static int initialize_sockets(void) {
+    int ret = 0;
+
+#ifdef WIN32
+    WSADATA wsaData;
+    DWORD err = WSAStartup(MAKEWORD(2,0), &wsaData);
+
+    if (err != 0) {
+        LPVOID error_msg;
+        if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                          FORMAT_MESSAGE_FROM_SYSTEM |
+                          FORMAT_MESSAGE_IGNORE_INSERTS,
+                          NULL, err, 0, (LPTSTR)&error_msg, 0, NULL) != 0) {
+            fprintf(stderr, "%s\n", error_msg);
+            LocalFree(error_msg);
+        } else {
+            fprintf(stderr, "Failed to initialize winsock\n");
+        }
+        ret = -1;
+    }
+#endif
+
+    return ret;
+}
+
 /**
  * Create a handle to a memcached library
  */
@@ -1032,6 +1063,10 @@ int main(int argc, char **argv) {
                 fprintf(stderr, "\t\t(implies -S, requires -k)\n");
                 return 1;
         }
+    }
+
+    if (initialize_sockets() != 0) {
+        exit(-1);
     }
 
     if (set_bench == 1 && keyarray==NULL) {
